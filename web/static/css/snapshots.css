@@ -1,0 +1,147 @@
+/* Snapshot Items */
+.snapshot-item {
+    margin-bottom: 2rem;
+    transition: all var(--transition-speed) ease;
+}
+
+.snapshot-item:hover {
+    transform: translateY(-5px);
+}
+
+.snapshot-item img {
+    width: 100%;
+    border-radius: var(--border-radius);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all var(--transition-speed) ease;
+}
+
+.snapshot-item:hover img {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    transform: scale(1.02);
+}
+
+/* Snapshot Preview */
+.snapshot-preview {
+    position: relative;
+    overflow: hidden;
+    padding-top: 75%; /* 4:3 Aspect Ratio */
+    border-radius: var(--border-radius);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+}
+
+.snapshot-preview img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--transition-speed) ease;
+}
+
+.snapshot-preview:hover img {
+    transform: scale(1.05);
+}
+
+/* Snapshot Overlay */
+.snapshot-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.snapshot-preview:hover .snapshot-overlay {
+    opacity: 1;
+}
+
+.snapshot-overlay .btn {
+    transform: translateY(20px);
+    transition: all var(--transition-speed) ease;
+}
+
+.snapshot-preview:hover .snapshot-overlay .btn {
+    transform: translateY(0);
+}
+
+/* Snapshot Modal */
+.snapshot-modal-container {
+    max-height: 80vh;
+    overflow: auto;
+    padding: 1rem;
+    background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+    border-radius: var(--border-radius);
+}
+
+.snapshot-modal-container img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+/* Snapshot Filters */
+.snapshot-filters {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+    border-radius: var(--border-radius);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.snapshot-filters .form-label {
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.snapshot-filters .form-select,
+.snapshot-filters .form-control {
+    border-radius: var(--border-radius);
+    border: 1px solid rgba(0,0,0,0.1);
+    padding: 0.5rem 1rem;
+    transition: all var(--transition-speed) ease;
+}
+
+.snapshot-filters .form-select:focus,
+.snapshot-filters .form-control:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.snapshot-item {
+    animation: fadeInUp 0.5s ease forwards;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .snapshot-item {
+        margin-bottom: 1rem;
+    }
+    
+    .snapshot-filters {
+        padding: 1rem;
+    }
+    
+    .snapshot-modal-container {
+        padding: 0.5rem;
+    }
+} 

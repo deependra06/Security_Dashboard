@@ -1,0 +1,336 @@
+{% extends "base.html" %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/snapshots.css') }}">
+{% endblock %}
+
+{% block title %}Snapshots - Security System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mb-4">Snapshots</h1>
+    
+    <!-- Snapshots Filter -->
+    <div class="card mb-4">
+        <div class="card-header">Filter Snapshots</div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="snapshotTypeFilter" class="form-label">Snapshot Type</label>
+                    <select class="form-select" id="snapshotTypeFilter">
+                        <option value="all">All Snapshots</option>
+                        <option value="motion">Motion</option>
+                        <option value="unknown_face">Unknown Faces</option>
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="dateFilter" class="form-label">Date</label>
+                    <input type="date" class="form-control" id="dateFilter">
+                </div>
+                <div class="col-md-4 mb-3 d-flex align-items-end">
+                    <button class="btn btn-primary w-100" id="applyFilter">Apply Filter</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Clear Snapshots -->
+    <div class="card mb-4">
+        <div class="card-header">Clear Snapshots</div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <button class="btn btn-danger w-100" id="clearMotionSnapshots">
+                        <i class="fas fa-trash"></i> Clear Motion Snapshots
+                    </button>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <button class="btn btn-danger w-100" id="clearUnknownSnapshots">
+                        <i class="fas fa-trash"></i> Clear Unknown Face Snapshots
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Snapshots Grid -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Snapshots</span>
+            <div>
+                <button class="btn btn-sm btn-outline-secondary" id="refreshSnapshots">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row" id="snapshotsGrid">
+                {% if snapshots %}
+                    {% for snapshot in snapshots %}
+                        <div class="col-md-4 col-lg-3 mb-4 snapshot-item" 
+                            data-type="{{ snapshot.type }}"
+                            data-date="{{ snapshot.date.split(' ')[0] }}">
+                            <div class="card h-100">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <span class="badge 
+                                        {% if snapshot.type == 'motion' %}bg-warning
+                                        {% else %}bg-danger{% endif %}">
+                                        {% if snapshot.type == 'motion' %}
+                                            Motion
+                                        {% else %}
+                                            Unknown Face
+                                        {% endif %}
+                                    </span>
+                                    <small class="text-muted">{{ snapshot.date }}</small>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="snapshot-preview">
+                                        <img src="{{ snapshot.filepath }}" 
+                                             class="img-fluid" 
+                                             alt="Snapshot"
+                                             onerror="this.onerror=null; this.src='/static/img/error-placeholder.png';">
+                                        <div class="snapshot-overlay">
+                                            <button class="btn btn-sm btn-light view-snapshot" data-filepath="{{ snapshot.filepath }}">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="d-flex justify-content-between">
+                                        <button class="btn btn-sm btn-outline-primary view-snapshot" data-filepath="{{ snapshot.filepath }}">
+                                            <i class="fas fa-eye"></i> View
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger delete-snapshot" data-filepath="{{ snapshot.filepath }}">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="col-12 text-center py-4 text-muted">
+                        No snapshots found.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Snapshot Modal -->
+<div class="modal fade" id="snapshotModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Snapshot</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="snapshot-modal-container">
+                    <img id="snapshotImage" src="" alt="Snapshot" class="img-fluid">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a id="downloadSnapshot" href="#" class="btn btn-primary" download>
+                    <i class="fas fa-download"></i> Download
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this snapshot? This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Set today's date as default
+        const today = new Date().toISOString().split('T')[0];
+        $('#dateFilter').val(today);
+        
+        // Apply filter
+        $('#applyFilter').click(function() {
+            const snapshotType = $('#snapshotTypeFilter').val();
+            const date = $('#dateFilter').val();
+            
+            $('.snapshot-item').each(function() {
+                const item = $(this);
+                const itemType = item.data('type');
+                const itemDate = item.data('date');
+                
+                let show = true;
+                
+                if (snapshotType !== 'all' && itemType !== snapshotType) {
+                    show = false;
+                }
+                
+                if (date && itemDate !== date) {
+                    show = false;
+                }
+                
+                item.toggle(show);
+            });
+            
+            // Check if any items are visible
+            if ($('.snapshot-item:visible').length === 0) {
+                // Check if the message already exists before adding it
+                if ($('#noSnapshotsMessage').length === 0) {
+                    $('#snapshotsGrid').append(`
+                        <div class="col-12 text-center py-4 text-muted" id="noSnapshotsMessage">
+                            No snapshots match the selected filters.
+                        </div>
+                    `);
+                }
+            } else {
+                $('#noSnapshotsMessage').remove();
+            }
+        });
+        
+        // Refresh snapshots
+        $('#refreshSnapshots').click(function() {
+            location.reload();
+        });
+        
+        // View snapshot
+        $('.view-snapshot').click(function() {
+            const filepath = $(this).data('filepath');
+            const img = $('#snapshotImage');
+            
+            // Show loading state
+            img.attr('src', '/static/img/loading.gif');
+            
+            // Load the image
+            img.attr('src', filepath);
+            
+            // Set download link
+            $('#downloadSnapshot').attr('href', filepath);
+            
+            // Show modal
+            $('#snapshotModal').modal('show');
+        });
+        
+        // Delete snapshot
+        $('.delete-snapshot').click(function() {
+            const filepath = $(this).data('filepath');
+            $('#confirmDelete').data('filepath', filepath);
+            $('#deleteModal').modal('show');
+        });
+        
+        // Confirm delete
+        $('#confirmDelete').click(function() {
+            const filepath = $(this).data('filepath');
+            
+            // Send delete request
+            fetch('/api/snapshots/delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ filepath: filepath })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Remove the snapshot from the grid
+                    $(`.snapshot-item img[src="${filepath}"]`).closest('.snapshot-item').remove();
+                    
+                    // Close the modal
+                    $('#deleteModal').modal('hide');
+                    
+                    // Show success message
+                    alert('Snapshot deleted successfully');
+                    
+                    // Check if there are any snapshots left
+                    if ($('.snapshot-item').length === 0) {
+                        $('#snapshotsGrid').html(`
+                            <div class="col-12 text-center py-4 text-muted">
+                                No snapshots found.
+                            </div>
+                        `);
+                    }
+                } else {
+                    alert(data.message || 'Error deleting snapshot');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error deleting snapshot. Please try again.');
+            });
+        });
+        
+        // Clear motion snapshots
+        $('#clearMotionSnapshots').click(function() {
+            if (confirm('Are you sure you want to clear all motion snapshots? This action cannot be undone.')) {
+                fetch('/api/snapshots/clear', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ type: 'motion' })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert(data.message);
+                        location.reload();
+                    } else {
+                        alert(data.message || 'Error clearing snapshots');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error clearing snapshots. Please try again.');
+                });
+            }
+        });
+        
+        // Clear unknown face snapshots
+        $('#clearUnknownSnapshots').click(function() {
+            if (confirm('Are you sure you want to clear all unknown face snapshots? This action cannot be undone.')) {
+                fetch('/api/snapshots/clear', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ type: 'unknown' })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert(data.message);
+                        location.reload();
+                    } else {
+                        alert(data.message || 'Error clearing snapshots');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error clearing snapshots. Please try again.');
+                });
+            }
+        });
+    });
+</script>
+{% endblock %} 

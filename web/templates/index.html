@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block title %}Dashboard - Security System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mb-4">Dashboard</h1>
+    
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stat-card">
+                <i class="fas fa-user-check text-success"></i>
+                <div class="stat-value">{{ stats.known_faces }}</div>
+                <div class="stat-label">Known Faces</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card">
+                <i class="fas fa-user-slash text-danger"></i>
+                <div class="stat-value">{{ stats.unknown_faces }}</div>
+                <div class="stat-label">Unknown Faces</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card">
+                <i class="fas fa-running text-warning"></i>
+                <div class="stat-value">{{ stats.motion_events }}</div>
+                <div class="stat-label">Motion Events</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card">
+                <i class="fas fa-envelope text-info"></i>
+                <div class="stat-value">{{ stats.email_notifications }}</div>
+                <div class="stat-label">Email Notifications</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Events -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Security Events</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_events %}
+                        {% for event in recent_events %}
+                        <div class="event-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    {% if event.type == 'known_face' %}
+                                    <span class="badge bg-success">Known Face</span>
+                                    {% elif event.type == 'unknown_face' %}
+                                    <span class="badge bg-danger">Unknown Face</span>
+                                    {% elif event.type == 'motion' %}
+                                    <span class="badge bg-warning">Motion</span>
+                                    {% endif %}
+                                    <span class="ms-2">{{ event.name }}</span>
+                                </div>
+                                <div>
+                                    <small class="text-muted">{{ event.date }} {{ event.time }}</small>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="badge bg-secondary">Confidence: {{ event.confidence }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="p-3 text-center text-muted">
+                            No recent events found.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Email Notifications</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_emails %}
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for email in recent_emails %}
+                                <tr>
+                                    <td>
+                                        {% if email.type == 'unknown_face' %}
+                                            <span class="badge bg-danger">Unknown Face</span>
+                                        {% elif email.type == 'motion' %}
+                                            <span class="badge bg-warning">Motion</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ email.type }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ email.date }}</td>
+                                    <td>{{ email.time }}</td>
+                                    <td>
+                                        {% if email.status == 'Sent' %}
+                                            <span class="badge bg-success">Sent</span>
+                                        {% elif email.status == 'Queued' %}
+                                            <span class="badge bg-warning">Queued</span>
+                                        {% elif email.status == 'Failed' %}
+                                            <span class="badge bg-danger">Failed</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ email.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <div class="p-3 text-center text-muted">
+                            No recent email notifications found.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">Quick Actions</div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="/camera" class="btn btn-primary w-100">
+                                <i class="fas fa-video me-2"></i> View Live Camera
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="/faces" class="btn btn-success w-100">
+                                <i class="fas fa-user-plus me-2"></i> Manage Known Faces
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="/snapshots" class="btn btn-info w-100">
+                                <i class="fas fa-images me-2"></i> View Snapshots
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="/settings" class="btn btn-secondary w-100">
+                                <i class="fas fa-cog me-2"></i> Configure Settings
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Refresh statistics every 30 seconds
+    setInterval(function() {
+        $.get('/api/statistics', function(data) {
+            $('.stat-value').each(function(index) {
+                if (index === 0) $(this).text(data.known_faces);
+                else if (index === 1) $(this).text(data.unknown_faces);
+                else if (index === 2) $(this).text(data.motion_events);
+                else if (index === 3) $(this).text(data.email_notifications);
+            });
+        });
+    }, 30000);
+</script>
+{% endblock %} 

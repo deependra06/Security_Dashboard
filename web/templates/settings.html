@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Security System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mb-4">Settings</h1>
+    
+    <div class="row">
+        <!-- Detection Settings -->
+        <!-- <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Detection Settings</h5>
+                </div>
+                <div class="card-body">
+                    <form id="detectionSettingsForm">
+                        <div class="mb-3">
+                            <label for="motionSensitivity" class="form-label">Motion Sensitivity</label>
+                            <input type="range" class="form-range" id="motionSensitivity" min="1" max="100" value="50">
+                            <div class="d-flex justify-content-between">
+                                <span>Low</span>
+                                <span id="motionSensitivityValue">50</span>
+                                <span>High</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="faceRecognitionThreshold" class="form-label">Face Recognition Threshold</label>
+                            <input type="range" class="form-range" id="faceRecognitionThreshold" min="1" max="100" value="70">
+                            <div class="d-flex justify-content-between">
+                                <span>Low</span>
+                                <span id="faceRecognitionThresholdValue">70</span>
+                                <span>High</span>
+                            </div>
+                            <div class="form-text">Higher values require closer matches for face recognition</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="notificationInterval" class="form-label">Notification Interval (seconds)</label>
+                            <input type="number" class="form-control" id="notificationInterval" min="1" max="3600" value="60">
+                            <div class="form-text">Minimum time between notifications for the same event</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Detection Settings</button>
+                    </form>
+                </div>
+            </div>
+        </div> -->
+        
+        <!-- Email Settings -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Email Settings</h5>
+                </div>
+                <div class="card-body">
+                    <form id="emailSettingsForm">
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="emailEnabled">
+                                <label class="form-check-label" for="emailEnabled">Enable Email Notifications</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="smtpServer" class="form-label">SMTP Server</label>
+                            <input type="text" class="form-control" id="smtpServer">
+                        </div>
+                        <div class="mb-3">
+                            <label for="smtpPort" class="form-label">SMTP Port</label>
+                            <input type="number" class="form-control" id="smtpPort" min="1" max="65535" value="587">
+                        </div>
+                        <div class="mb-3">
+                            <label for="smtpUsername" class="form-label">SMTP Username</label>
+                            <input type="text" class="form-control" id="smtpUsername">
+                        </div>
+                        <div class="mb-3">
+                            <label for="smtpPassword" class="form-label">SMTP Password</label>
+                            <input type="password" class="form-control" id="smtpPassword">
+                        </div>
+                        <div class="mb-3">
+                            <label for="senderEmail" class="form-label">Sender Email</label>
+                            <input type="email" class="form-control" id="senderEmail">
+                        </div>
+                        <div class="mb-3">
+                            <label for="recipientEmail" class="form-label">Recipient Email</label>
+                            <input type="email" class="form-control" id="recipientEmail">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Email Settings</button>
+                        <button type="button" class="btn btn-outline-secondary ms-2" id="testEmail">Test Email</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Storage Settings -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Storage Settings</h5>
+                </div>
+                <!-- <div class="card-body">
+                    <form id="storageSettingsForm">
+                        <div class="mb-3">
+                            <label for="maxSnapshots" class="form-label">Maximum Snapshots</label>
+                            <input type="number" class="form-control" id="maxSnapshots" min="10" max="1000" value="100">
+                            <div class="form-text">Maximum number of snapshots to keep before deleting oldest</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="maxEvents" class="form-label">Maximum Events</label>
+                            <input type="number" class="form-control" id="maxEvents" min="10" max="1000" value="100">
+                            <div class="form-text">Maximum number of events to keep in the log before deleting oldest</div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="autoCleanup">
+                                <label class="form-check-label" for="autoCleanup">Enable Automatic Cleanup</label>
+                            </div>
+                            <div class="form-text">Automatically delete old snapshots and events when limits are reached</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Storage Settings</button> -->
+                        <button type="button" class="btn btn-outline-danger ms-2" id="clearAllData">Clear All Data</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Clear Data Confirmation Modal -->
+<div class="modal fade" id="clearDataModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Data Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to clear all data? This will delete all snapshots, events, and known faces. This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmClearData">Clear All Data</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Load current settings
+        $.get('/api/settings', function(data) {
+            // Detection settings
+            $('#motionSensitivity').val(data.motion_sensitivity * 100 || 50);
+            $('#motionSensitivityValue').text(Math.round(data.motion_sensitivity * 100) || 50);
+            $('#faceRecognitionThreshold').val(data.face_recognition_threshold * 100 || 70);
+            $('#faceRecognitionThresholdValue').text(Math.round(data.face_recognition_threshold * 100) || 70);
+            $('#notificationInterval').val(data.notification_interval || 60);
+            
+            // Email settings
+            $('#emailEnabled').prop('checked', data.email_enabled || false);
+            $('#smtpServer').val(data.smtp_server || '');
+            $('#smtpPort').val(data.smtp_port || 587);
+            $('#smtpUsername').val(data.smtp_username || '');
+            $('#smtpPassword').val(data.smtp_password || '');
+            $('#senderEmail').val(data.sender_email || '');
+            $('#recipientEmail').val(data.recipient_email || '');
+            
+            // Storage settings
+            $('#maxSnapshots').val(data.max_snapshots || 100);
+            $('#maxEvents').val(data.max_events || 100);
+            $('#autoCleanup').prop('checked', data.auto_cleanup || false);
+        });
+        
+        // Detection settings form submission
+        $('#detectionSettingsForm').submit(function(e) {
+            e.preventDefault();
+            $.post('/api/settings/detection', {
+                motion_sensitivity: $('#motionSensitivity').val() / 100,
+                face_recognition_threshold: $('#faceRecognitionThreshold').val() / 100,
+                notification_interval: $('#notificationInterval').val()
+            }, function(response) {
+                if (response.status === 'success') {
+                    alert('Detection settings saved successfully');
+                } else {
+                    alert('Failed to save detection settings: ' + response.error);
+                }
+            });
+        });
+        
+        // Email settings form submission
+        $('#emailSettingsForm').submit(function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                email_enabled: $('#emailEnabled').is(':checked'),
+                smtp_server: $('#smtpServer').val(),
+                smtp_port: $('#smtpPort').val(),
+                smtp_username: $('#smtpUsername').val(),
+                smtp_password: $('#smtpPassword').val(),
+                sender_email: $('#senderEmail').val(),
+                recipient_email: $('#recipientEmail').val()
+            };
+            
+            $.ajax({
+                url: '/api/settings/email',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(formData),
+                success: function(response) {
+                    if (response.status === 'success') {
+                        showAlert('success', 'Email settings saved successfully');
+                        // Update form with returned config
+                        updateEmailForm(response.config);
+                    } else {
+                        showAlert('danger', 'Failed to save email settings: ' + response.message);
+                    }
+                },
+                error: function(xhr) {
+                    const errorMsg = xhr.responseJSON ? xhr.responseJSON.message : 'Failed to save email settings';
+                    showAlert('danger', errorMsg);
+                }
+            });
+        });
+        
+        function updateEmailForm(config) {
+            $('#emailEnabled').prop('checked', config.email_enabled);
+            $('#smtpServer').val(config.smtp_server);
+            $('#smtpPort').val(config.smtp_port);
+            $('#smtpUsername').val(config.smtp_username);
+            $('#smtpPassword').val(config.smtp_password);
+            $('#senderEmail').val(config.sender_email);
+            $('#recipientEmail').val(config.recipient_email);
+        }
+        
+        function showAlert(type, message) {
+            const alertHtml = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+            $('#alertContainer').html(alertHtml);
+            setTimeout(() => {
+                $('.alert').alert('close');
+            }, 5000);
+        }
+        
+        // Storage settings form submission
+        $('#storageSettingsForm').submit(function(e) {
+            e.preventDefault();
+            $.post('/api/settings/storage', {
+                max_snapshots: $('#maxSnapshots').val(),
+                max_events: $('#maxEvents').val(),
+                auto_cleanup: $('#autoCleanup').prop('checked')
+            }, function(response) {
+                if (response.status === 'success') {
+                    alert('Storage settings saved successfully');
+                } else {
+                    alert('Failed to save storage settings: ' + response.error);
+                }
+            });
+        });
+        
+        // Test email button
+        $('#testEmail').click(function() {
+            $.post('/api/settings/email/test', function(response) {
+                if (response.status === 'success') {
+                    alert('Test email sent successfully');
+                } else {
+                    alert('Failed to send test email: ' + response.error);
+                }
+            });
+        });
+        
+        // Clear all data button
+        $('#clearAllData').click(function() {
+            $('#clearDataModal').modal('show');
+        });
+        
+        // Confirm clear data
+        $('#confirmClearData').click(function() {
+            $.ajax({
+                url: '/api/clear_all',
+                method: 'POST',
+                success: function(response) {
+                    if (response.status === 'success') {
+                        showAlert('success', 'All data cleared successfully');
+                        $('#clearDataModal').modal('hide');
+                    } else {
+                        showAlert('danger', 'Failed to clear data: ' + response.message);
+                    }
+                },
+                error: function(xhr) {
+                    const errorMsg = xhr.responseJSON ? xhr.responseJSON.message : 'Failed to clear data';
+                    showAlert('danger', errorMsg);
+                }
+            });
+        });
+        
+        // Update range input values
+        $('#motionSensitivity').on('input', function() {
+            $('#motionSensitivityValue').text($(this).val());
+        });
+        
+        $('#faceRecognitionThreshold').on('input', function() {
+            $('#faceRecognitionThresholdValue').text($(this).val());
+        });
+    });
+</script>
+{% endblock %} 

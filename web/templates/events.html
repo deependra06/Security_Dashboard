@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+
+{% block title %}Events - Security System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Security Events</h1>
+    <p class="lead">Recent security events detected by the system</p>
+    
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Security Events</h5>
+            <div>
+                <button class="btn btn-danger btn-sm me-2" data-bs-toggle="modal" data-bs-target="#clearKnownFacesModal">
+                    <i class="fas fa-trash"></i> Clear Known Faces
+                </button>
+                <button class="btn btn-warning btn-sm me-2" data-bs-toggle="modal" data-bs-target="#clearUnknownFacesModal">
+                    <i class="fas fa-trash"></i> Clear Unknown Faces
+                </button>
+                <button class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#clearMotionModal">
+                    <i class="fas fa-trash"></i> Clear Motion Events
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th class="sortable" data-sort="type">Type <i class="fas fa-sort"></i></th>
+                            <th class="sortable" data-sort="date">Date <i class="fas fa-sort"></i></th>
+                            <th class="sortable" data-sort="time">Time <i class="fas fa-sort"></i></th>
+                            <th class="sortable" data-sort="confidence">Confidence <i class="fas fa-sort"></i></th>
+                            <th class="sortable" data-sort="snapshot">Snapshot <i class="fas fa-sort"></i></th>
+                        </tr>
+                    </thead>
+                    <tbody id="eventsTableBody">
+                        {% for event in events %}
+                        <tr>
+                            <td>
+                                <span class="badge {% if event.type == 'known_face' %}bg-success{% elif event.type == 'unknown_face' %}bg-warning{% else %}bg-info{% endif %}">
+                                    {{ event.name }}
+                                </span>
+                            </td>
+                            <td>{{ event.date }}</td>
+                            <td>{{ event.time }}</td>
+                            <td>{{ event.confidence }}</td>
+                            <td>
+                                {% if event.snapshot and event.snapshot != 'N/A' %}
+                                    {% if event.type == 'motion' %}
+                                        <a href="/snapshot/motion/{{ event.snapshot }}" target="_blank">{{ event.snapshot }}</a>
+                                    {% elif event.type == 'unknown_face' %}
+                                        <a href="/snapshot/unknown/{{ event.snapshot }}" target="_blank">{{ event.snapshot }}</a>
+                                    {% else %}
+                                        <a href="/snapshot/{{ event.snapshot }}" target="_blank">{{ event.snapshot }}</a>
+                                    {% endif %}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center">No events found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Clear Known Faces Modal -->
+<div class="modal fade" id="clearKnownFacesModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Clear Known Faces</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to clear all known face events? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="clearEvents('known_faces')">Clear</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Clear Unknown Faces Modal -->
+<div class="modal fade" id="clearUnknownFacesModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Clear Unknown Faces</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to clear all unknown face events? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" onclick="clearEvents('unknown_faces')">Clear</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Clear Motion Events Modal -->
+<div class="modal fade" id="clearMotionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Clear Motion Events</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to clear all motion events? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-info" onclick="clearEvents('motion')">Clear</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.sortable {
+    cursor: pointer;
+    user-select: none;
+}
+.sortable:hover {
+    background-color: rgba(0,0,0,0.05);
+}
+.sortable i {
+    margin-left: 5px;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const table = document.querySelector('table');
+    const headers = table.querySelectorAll('th.sortable');
+    let currentSort = {
+        column: null,
+        direction: 1
+    };
+
+    headers.forEach(header => {
+        header.addEventListener('click', () => {
+            const column = header.dataset.sort;
+            const icon = header.querySelector('i');
+            
+            // Reset all icons
+            headers.forEach(h => h.querySelector('i').className = 'fas fa-sort');
+            
+            // Update sort direction
+            if (currentSort.column === column) {
+                currentSort.direction *= -1;
+            } else {
+                currentSort.column = column;
+                currentSort.direction = 1;
+            }
+            
+            // Update icon
+            icon.className = currentSort.direction === 1 ? 'fas fa-sort-up' : 'fas fa-sort-down';
+            
+            // Sort the table
+            sortTable(column, currentSort.direction);
+        });
+    });
+
+    function sortTable(column, direction) {
+        const tbody = document.getElementById('eventsTableBody');
+        const rows = Array.from(tbody.getElementsByTagName('tr'));
+        
+        rows.sort((a, b) => {
+            let aValue = a.cells[getColumnIndex(column)].textContent.trim();
+            let bValue = b.cells[getColumnIndex(column)].textContent.trim();
+            
+            // Handle special cases
+            if (column === 'confidence') {
+                aValue = parseFloat(aValue) || 0;
+                bValue = parseFloat(bValue) || 0;
+            } else if (column === 'date' || column === 'time') {
+                // Keep date/time as strings for proper sorting
+            } else {
+                // Case-insensitive string comparison for other columns
+                aValue = aValue.toLowerCase();
+                bValue = bValue.toLowerCase();
+            }
+            
+            if (aValue < bValue) return -1 * direction;
+            if (aValue > bValue) return 1 * direction;
+            return 0;
+        });
+        
+        // Reorder the rows
+        rows.forEach(row => tbody.appendChild(row));
+    }
+
+    function getColumnIndex(column) {
+        const headers = Array.from(table.querySelectorAll('th'));
+        return headers.findIndex(h => h.dataset.sort === column);
+    }
+});
+
+function clearEvents(type) {
+    fetch('/api/events/clear', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ type: type })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Close the modal based on event type
+            let modalId;
+            switch(type) {
+                case 'known_faces':
+                    modalId = 'clearKnownFacesModal';
+                    break;
+                case 'unknown_faces':
+                    modalId = 'clearUnknownFacesModal';
+                    break;
+                case 'motion':
+                    modalId = 'clearMotionModal';
+                    break;
+                default:
+                    modalId = null;
+            }
+            
+            if (modalId) {
+                const modal = document.getElementById(modalId);
+                const modalInstance = bootstrap.Modal.getInstance(modal);
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+            }
+            
+            // Show success message
+            alert(data.message);
+            
+            // Reload the page
+            location.reload();
+        } else {
+            alert(data.message || 'Error clearing events');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error clearing events. Please try again.');
+    });
+}
+</script>
+{% endblock %} 

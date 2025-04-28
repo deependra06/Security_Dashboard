@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/camera.css') }}">
+{% endblock %}
+
+{% block title %}Live Camera - Security System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Live Camera Feed</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center">
+                        <div id="cameraContainer" style="position: relative; min-height: 480px; background-color: #f8f9fa;">
+                            <img id="cameraFeed" src="" alt="Camera Feed" class="img-fluid" style="max-width: 100%; display: none;">
+                            <div id="cameraPlaceholder" class="d-flex align-items-center justify-content-center h-100">
+                                <div class="text-center">
+                                    <i class="fas fa-video fa-3x text-muted mb-3"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="cameraStatus" class="mt-2">
+                            <span class="badge bg-secondary">Offline</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Camera Controls</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="cameraToggle">
+                        <label class="form-check-label" for="cameraToggle">Camera Status</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let feedUpdateInterval;
+const FEED_UPDATE_INTERVAL = 200; // 5 FPS
+const MAX_ERROR_COUNT = 5;
+let errorCount = 0;
+let feedActive = false;
+let cameraState = false; // Track the actual camera state
+let pendingAction = false; // Flag to indicate a pending API call
+
+// Function to start camera feed updates
+function startFeedUpdates() {
+    if (feedUpdateInterval) {
+        clearInterval(feedUpdateInterval);
+    }
+    
+    feedActive = true;
+    feedUpdateInterval = setInterval(updateCameraFeed, FEED_UPDATE_INTERVAL);
+    console.log("Started feed updates");
+}
+
+// Function to stop camera feed updates
+function stopFeedUpdates() {
+    if (feedUpdateInterval) {
+        clearInterval(feedUpdateInterval);
+        feedUpdateInterval = null;
+    }
+    feedActive = false;
+    console.log("Stopped feed updates");
+}
+
+// Function to update camera feed
+function updateCameraFeed() {
+    if (!feedActive) return;
+    
+    const cameraFeed = document.getElementById('cameraFeed');
+    const cameraPlaceholder = document.getElementById('cameraPlaceholder');
+    const cameraStatus = document.getElementById('cameraStatus');
+    if (!cameraFeed || !cameraPlaceholder) return;
+    
+    const timestamp = new Date().getTime();
+    const feedUrl = `/api/camera/feed?t=${timestamp}`;
+    
+    // Create a new image object to preload
+    const img = new Image();
+    
+    img.onload = function() {
+        errorCount = 0;
+        cameraFeed.src = feedUrl;
+        cameraFeed.style.display = 'block';
+        cameraPlaceholder.style.display = 'none';
+        cameraStatus.innerHTML = '<span class="badge bg-success">Online</span>';
+    };
+    
+    img.onerror = function() {
+        errorCount++;
+        console.log(`Feed error (${errorCount}/${MAX_ERROR_COUNT})`);
+        
+        if (errorCount >= MAX_ERROR_COUNT) {
+            stopFeedUpdates();
+            cameraFeed.style.display = 'none';
+            cameraPlaceholder.style.display = 'flex';
+            cameraStatus.innerHTML = '<span class="badge bg-danger">Error</span>';
+            
+            // Reset the camera system if we're getting errors
+            if (cameraState) {
+                console.log("Attempting to reset camera after errors");
+                sendCameraCommand(false)
+                  .then(() => {
+                      setTimeout(() => sendCameraCommand(true), 2000);
+                  });
+            }
+        }
+    };
+    
+    // Start loading the image
+    img.src = feedUrl;
+}
+
+// Function to check camera status
+function checkCameraStatus() {
+    // Skip checking if there's a pending action
+    if (pendingAction) {
+        console.log("Skipping status check due to pending action");
+        return;
+    }
+    
+    fetch('/api/camera/status')
+        .then(response => response.json())
+        .then(data => {
+            const cameraToggle = document.getElementById('cameraToggle');
+            const cameraStatus = document.getElementById('cameraStatus');
+            const cameraFeed = document.getElementById('cameraFeed');
+            const cameraPlaceholder = document.getElementById('cameraPlaceholder');
+            
+            console.log("Camera status check:", data.running);
+            
+            // Update our state tracking
+            cameraState = data.running;
+            
+            // Update UI elements to reflect current state
+            cameraToggle.checked = cameraState;
+            
+            if (cameraState) {
+                cameraStatus.innerHTML = '<span class="badge bg-success">Online</span>';
+                
+                // Start feed updates if not already active
+                if (!feedActive) {
+                    startFeedUpdates();
+                }
+            } else {
+                cameraStatus.innerHTML = '<span class="badge bg-secondary">Offline</span>';
+                
+                // Stop feed updates if active
+                if (feedActive) {
+                    stopFeedUpdates();
+                }
+                
+                // Hide feed and show placeholder
+                if (cameraFeed) cameraFeed.style.display = 'none';
+                if (cameraPlaceholder) cameraPlaceholder.style.display = 'flex';
+            }
+        })
+        .catch(error => {
+            console.error('Error checking camera status:', error);
+            document.getElementById('cameraStatus').innerHTML = '<span class="badge bg-danger">Error</span>';
+        });
+}
+
+// Function to send camera commands
+function sendCameraCommand(turnOn) {
+    pendingAction = true;
+    
+    const endpoint = turnOn ? '/api/camera/start' : '/api/camera/stop';
+    const action = turnOn ? 'start' : 'stop';
+    
+    console.log(`Sending command to ${action} camera`);
+    
+    return fetch(endpoint, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log(`Camera ${action} response:`, data);
+        
+        if (data.status === 'success') {
+            // Update our local state
+            cameraState = turnOn;
+            
+            // Update UI based on new state
+            const cameraToggle = document.getElementById('cameraToggle');
+            if (cameraToggle) {
+                cameraToggle.checked = cameraState;
+            }
+            
+            const cameraStatus = document.getElementById('cameraStatus');
+            if (cameraStatus) {
+                cameraStatus.innerHTML = turnOn ? 
+                    '<span class="badge bg-success">Online</span>' : 
+                    '<span class="badge bg-secondary">Offline</span>';
+            }
+            
+            // Handle feed updates
+            if (turnOn) {
+                if (!feedActive) startFeedUpdates();
+            } else {
+                if (feedActive) stopFeedUpdates();
+                
+                const cameraFeed = document.getElementById('cameraFeed');
+                const cameraPlaceholder = document.getElementById('cameraPlaceholder');
+                
+                if (cameraFeed) cameraFeed.style.display = 'none';
+                if (cameraPlaceholder) cameraPlaceholder.style.display = 'flex';
+            }
+        } else {
+            console.error(`Failed to ${action} camera:`, data.status);
+            document.getElementById('cameraStatus').innerHTML = '<span class="badge bg-danger">Error</span>';
+            
+            // Revert the UI toggle to match actual state
+            const cameraToggle = document.getElementById('cameraToggle');
+            if (cameraToggle) {
+                cameraToggle.checked = cameraState;
+            }
+        }
+        
+        // Clear the pending flag after a short delay
+        setTimeout(() => {
+            pendingAction = false;
+            // Check camera status to ensure UI is in sync
+            checkCameraStatus();
+        }, 2000);
+        
+        return data;
+    })
+    .catch(error => {
+        console.error(`Error ${action}ing camera:`, error);
+        document.getElementById('cameraStatus').innerHTML = '<span class="badge bg-danger">Error</span>';
+        
+        // Revert the UI toggle to match actual state
+        const cameraToggle = document.getElementById('cameraToggle');
+        if (cameraToggle) {
+            cameraToggle.checked = cameraState;
+        }
+        
+        // Clear the pending flag
+        pendingAction = false;
+        
+        throw error;
+    });
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("Page loaded, initializing camera system");
+    
+    // Initial status check
+    checkCameraStatus();
+    
+    // Set up periodic status check - less frequent to avoid race conditions
+    setInterval(checkCameraStatus, 5000);
+    
+    // Set up toggle button handler
+    document.getElementById('cameraToggle').addEventListener('change', (e) => {
+        // Only take action if we're not already processing a command
+        if (!pendingAction) {
+            const requestedState = e.target.checked;
+            console.log(`Toggle clicked: ${requestedState}`);
+            
+            // Only send command if it would change the state
+            if (requestedState !== cameraState) {
+                sendCameraCommand(requestedState);
+            }
+        } else {
+            // Revert the toggle to match current state if we're busy
+            e.target.checked = cameraState;
+            console.log("Ignoring toggle while pending action is in progress");
+        }
+    });
+});
+
+// Cleanup when leaving the page
+window.addEventListener('beforeunload', () => {
+    stopFeedUpdates();
+});
+</script>
+{% endblock %}

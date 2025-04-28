@@ -1,0 +1,153 @@
+/* Face Items */
+.face-item {
+    margin-bottom: 2rem;
+    transition: all var(--transition-speed) ease;
+}
+
+.face-item:hover {
+    transform: translateY(-5px);
+}
+
+.face-item img {
+    width: 100%;
+    border-radius: var(--border-radius);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all var(--transition-speed) ease;
+}
+
+.face-item:hover img {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    transform: scale(1.02);
+}
+
+/* Face Preview */
+.face-preview {
+    position: relative;
+    width: 100%;
+    padding-top: 75%; /* 4:3 Aspect Ratio */
+    overflow: hidden;
+    background-color: #f8f9fa;
+    border-radius: var(--border-radius);
+}
+
+.face-preview img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--transition-speed) ease;
+}
+
+.face-preview:hover img {
+    transform: scale(1.05);
+}
+
+/* Face Card */
+.face-card {
+    background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+    border-radius: var(--border-radius);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all var(--transition-speed) ease;
+}
+
+.face-card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.face-card .card-header {
+    background: transparent;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    padding: 1rem;
+}
+
+.face-card .card-title {
+    margin: 0;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.face-card .card-footer {
+    background: transparent;
+    border-top: 1px solid rgba(0,0,0,0.1);
+    padding: 1rem;
+}
+
+/* Add Face Form */
+.add-face-form {
+    background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.add-face-form .form-label {
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.add-face-form .form-control {
+    border-radius: var(--border-radius);
+    border: 1px solid rgba(0,0,0,0.1);
+    padding: 0.5rem 1rem;
+    transition: all var(--transition-speed) ease;
+}
+
+.add-face-form .form-control:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+}
+
+/* Face Actions */
+.face-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+
+.face-actions .btn {
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius);
+    transition: all var(--transition-speed) ease;
+}
+
+.face-actions .btn:hover {
+    transform: translateY(-2px);
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.face-item {
+    animation: fadeInUp 0.5s ease forwards;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .face-item {
+        margin-bottom: 1rem;
+    }
+    
+    .add-face-form {
+        padding: 1rem;
+    }
+    
+    .face-actions {
+        flex-direction: column;
+    }
+    
+    .face-actions .btn {
+        width: 100%;
+    }
+} 
