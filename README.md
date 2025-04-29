@@ -7,7 +7,6 @@ A real-time security monitoring system with face recognition capabilities, built
 - Real-time face detection and recognition
 - Motion detection alerts
 - Live camera feed monitoring
-- User authentication system
 - Email notifications for security alerts
 - Dashboard for security status monitoring
 - Snapshot storage for detected events
@@ -15,7 +14,7 @@ A real-time security monitoring system with face recognition capabilities, built
 ## Prerequisites
 
 - Python 3.8 or higher
-- Webcam or IP camera
+- Webcam
 - Internet connection for email notifications
 
 ## Installation
