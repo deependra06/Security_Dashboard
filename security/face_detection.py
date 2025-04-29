@@ -24,7 +24,7 @@ class detection():
         # Email configuration
         email_config = {
             'sender_email': 'deepaksheoran195@gmail.com',
-            'sender_password': 'aivmzakkbrgfvjqb',
+            'sender_password': '',
             'receiver_email': 'dkumar05003@gmail.com',
             'smtp_server': 'smtp.gmail.com',
             'smtp_port': 587
